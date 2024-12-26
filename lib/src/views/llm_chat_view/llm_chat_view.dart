@@ -76,11 +76,14 @@ class LlmChatView extends StatefulWidget {
   ///   a chat operation. Defaults to 'CANCEL'.
   /// - [errorMessage]: Optional. The message to display when an error occurs
   ///   during a chat operation. Defaults to 'ERROR'.
+  /// - [bottomChatWidget]: Optional. A widget to display at the bottom of the
+  ///   chat interface.
   LlmChatView({
     required LlmProvider provider,
     LlmChatViewStyle? style,
     ResponseBuilder? responseBuilder,
     LlmStreamGenerator? messageSender,
+    this.initialMessage,
     this.suggestions = const [],
     this.bottomChatWidget,
     String? welcomeMessage,
@@ -135,6 +138,9 @@ class LlmChatView extends StatefulWidget {
   /// Defaults to 'ERROR'.
   final String errorMessage;
 
+  /// The initial message to display in the chat input area.
+  ChatMessage? initialMessage;
+
   @override
   State<LlmChatView> createState() => _LlmChatViewState();
 }
@@ -145,7 +151,6 @@ class _LlmChatViewState extends State<LlmChatView>
   bool get wantKeepAlive => true;
 
   LlmResponse? _pendingPromptResponse;
-  ChatMessage? _initialMessage;
   ChatMessage? _associatedResponse;
   LlmResponse? _pendingSttResponse;
 
@@ -199,7 +204,7 @@ class _LlmChatViewState extends State<LlmChatView>
               ),
               if (widget.bottomChatWidget != null) widget.bottomChatWidget!,
               ChatInput(
-                initialMessage: _initialMessage,
+                initialMessage: widget.initialMessage,
                 onCancelEdit:
                     _associatedResponse != null ? _onCancelEdit : null,
                 onSendMessage: _onSendMessage,
@@ -219,7 +224,7 @@ class _LlmChatViewState extends State<LlmChatView>
     String prompt,
     Iterable<Attachment> attachments,
   ) async {
-    _initialMessage = null;
+    widget.initialMessage = null;
     _associatedResponse = null;
 
     // check the viewmodel for a user-provided message sender to use instead
@@ -262,13 +267,13 @@ class _LlmChatViewState extends State<LlmChatView>
     // set the text  to the last userMessage to provide initial prompt and
     // attachments for the user to edit
     setState(() {
-      _initialMessage = userMessage;
+      widget.initialMessage = userMessage;
       _associatedResponse = llmMessage;
     });
   }
 
   Future<void> _onTranslateStt(XFile file) async {
-    _initialMessage = null;
+    widget.initialMessage = null;
     _associatedResponse = null;
 
     // use the LLM to translate the attached audio to text
@@ -299,7 +304,7 @@ class _LlmChatViewState extends State<LlmChatView>
   ) async {
     assert(_pendingSttResponse != null);
     setState(() {
-      _initialMessage = ChatMessage.user(response, []);
+      widget.initialMessage = ChatMessage.user(response, []);
       _pendingSttResponse = null;
     });
 
@@ -356,29 +361,29 @@ class _LlmChatViewState extends State<LlmChatView>
   }
 
   void _onSelectSuggestion(String suggestion) =>
-      setState(() => _initialMessage = ChatMessage.user(suggestion, []));
+      setState(() => widget.initialMessage = ChatMessage.user(suggestion, []));
 
   void _onHistoryChanged() {
     // if the history is cleared, clear the initial message
     if (widget.viewModel.provider.history.isEmpty) {
       setState(() {
-        _initialMessage = null;
+        widget.initialMessage = null;
         _associatedResponse = null;
       });
     }
   }
 
   void _onCancelEdit() {
-    assert(_initialMessage != null);
+    assert(widget.initialMessage != null);
     assert(_associatedResponse != null);
 
     // add the original message and response back to the history
     final history = widget.viewModel.provider.history.toList();
-    history.addAll([_initialMessage!, _associatedResponse!]);
+    history.addAll([widget.initialMessage!, _associatedResponse!]);
     widget.viewModel.provider.history = history;
 
     setState(() {
-      _initialMessage = null;
+      widget.initialMessage = null;
       _associatedResponse = null;
     });
   }
