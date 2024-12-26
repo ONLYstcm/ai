@@ -82,6 +82,7 @@ class LlmChatView extends StatefulWidget {
     ResponseBuilder? responseBuilder,
     LlmStreamGenerator? messageSender,
     this.suggestions = const [],
+    this.bottomChatWidget,
     String? welcomeMessage,
     this.onCancelCallback,
     this.onErrorCallback,
@@ -102,6 +103,9 @@ class LlmChatView extends StatefulWidget {
   /// when the chat history is empty. The user can select any of these
   /// suggestions to quickly start a conversation with the LLM.
   final List<String> suggestions;
+
+  /// An optional widget to display at the bottom of the chat interface.
+  final Widget? bottomChatWidget;
 
   /// The view model containing the chat state and configuration.
   ///
@@ -193,6 +197,7 @@ class _LlmChatViewState extends State<LlmChatView>
                   ],
                 ),
               ),
+              if (widget.bottomChatWidget != null) widget.bottomChatWidget!,
               ChatInput(
                 initialMessage: _initialMessage,
                 onCancelEdit:
